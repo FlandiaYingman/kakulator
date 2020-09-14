@@ -47,7 +47,7 @@ long long m2ll(mint m)
             {
                 printf("MINT M2LL OVERFLOW");
             }
-            
+
             ll += m.data[index] * powl(BYTE_DIGIT, index);
         }
     }
@@ -149,6 +149,16 @@ bool lt(mint a, mint b)
     return false;
 }
 
+mint sumi(mint a, int b)
+{
+    return sum(a, i2m(b));
+}
+
+mint subi(mint a, int b)
+{
+    return sub(a, i2m(b));
+}
+
 mint sum(mint a, mint b)
 {
     if (a.positive == b.positive)
@@ -215,6 +225,28 @@ mint sub(mint a, mint b)
         b.positive = !(b.positive);
         return sub;
     }
+}
+
+mint mulb(mint a, byte b)
+{
+    mint product = new_mint();
+    product.positive = a.positive;
+
+    unsigned int carry = 0;
+    for (size_t i = 0; i < MINT_LENGTH; i++)
+    {
+        unsigned int byte_product = a.data[i] * b;
+        product.data[i] = byte_product % BYTE_DIGIT;
+        carry = byte_product / BYTE_DIGIT;
+    }
+
+    if (carry != 0)
+    {
+        printf("MINT MULB OVERFLOW");
+        exit(1);
+    }
+
+    return product;
 }
 
 int main()
