@@ -2,6 +2,7 @@
 #define MINT_H
 
 #define MINT_LENGTH 128
+#define MINT_BITS 1024
 
 typedef unsigned char byte;
 const byte BYTE_MAX = 0b11111111;
