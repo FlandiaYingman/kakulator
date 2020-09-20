@@ -6,6 +6,15 @@
 
 #include "mint.h"
 
+#define max(a, b) \
+    ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+#define min(a, b) \
+    ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
 
 // Initialization Functions
 
@@ -16,7 +25,6 @@ mint newm()
     memset(new_mint.data, BYTE_MIN, MINT_BYTES);
     return new_mint;
 }
-
 
 // Conversation Functions
 
@@ -71,7 +79,6 @@ int m2i(mint m)
     return m2ll(m);
 }
 
-
 // Bitwise Functions
 
 bool get_bit(mint m, int i)
@@ -110,7 +117,6 @@ mint right_shift(mint m, int index)
     }
     return m;
 }
-
 
 // Comparing Functions
 
@@ -207,6 +213,32 @@ bool lt(mint a, mint b)
     return false;
 }
 
+// Util Functions
+
+int valid_bytes(mint m)
+{
+    int vb = MINT_BYTES;
+    for (int i = MINT_BYTES; i-- > 0;)
+    {
+        if (m.data[i] == BYTE_MIN)
+            vb--;
+        else
+            break;
+    }
+    return vb;
+}
+
+mint absm(mint m)
+{
+    m.positive = true;
+    return m;
+}
+
+mint negatem(mint m)
+{
+    m.positive = !m.positive;
+    return m;
+}
 
 // Basic Math Funcions
 
@@ -253,73 +285,58 @@ mint subm(mint a, mint b)
 {
     if (a.positive == b.positive)
     {
-        mint sub = newm();
-        sub.positive = gt(a, b);
-        int carry = 0;
-        for (size_t i = 0; i < MINT_BYTES; i++)
+        if (gt(absm(a), absm(b)))
         {
-            int byte_sub = BYTE_RADIX + (int)a.data[i] - (int)b.data[i] + carry;
-            sub.data[i] = byte_sub % BYTE_RADIX;
-            carry = (byte_sub / BYTE_RADIX) - 1;
+            mint sub = newm();
+
+            sub.positive = a.positive;
+            int carry = 0;
+            for (size_t i = 0; i < MINT_BYTES; i++)
+            {
+                int byte_sub = BYTE_RADIX + (int)a.data[i] - (int)b.data[i] + carry;
+                sub.data[i] = byte_sub % BYTE_RADIX;
+                carry = (byte_sub / BYTE_RADIX) - 1;
+            }
+            return sub;
         }
-        if (carry != 0)
+        else
         {
-            printf("MINT SUB OVERFLOW!");
-            exit(1);
+            return negatem(subm(b, a));
         }
-        return sub;
     }
     else
     {
-        b.positive = !(b.positive);
-        mint sub = summ(a, b);
-        b.positive = !(b.positive);
+        mint sub = summ(absm(a), absm(b));
+        sub.positive = a.positive;
         return sub;
     }
-}
-
-mint muli(mint a, int b)
-{
-    mint product = newm();
-    product.positive = a.positive;
-
-    unsigned long long carry = 0;
-    for (size_t i = 0; i < MINT_BYTES; i++)
-    {
-        unsigned long long byte_product = a.data[i] * b + carry;
-        product.data[i] = byte_product % BYTE_RADIX;
-        carry = byte_product / BYTE_RADIX;
-    }
-
-    if (carry != 0)
-    {
-        printf("MINT MULI OVERFLOW");
-        exit(1);
-    }
-
-    return product;
 }
 
 mint mulm(mint a, mint b)
 {
+    if (valid_bytes(a) + valid_bytes(b) > MINT_BYTES)
+    {
+        printf("MULM OVERFLOW");
+        exit(1);
+    }
+
     mint product = newm();
-    product.positive = a.positive == b.positive;
+    int p = valid_bytes(a);
+    int q = valid_bytes(b);
 
-    mint temp_array[MINT_BYTES];
-    for (size_t i = 0; i < MINT_BYTES; i++)
+    for (int bi = 0; bi < p + q + 1; bi++)
     {
-        mint byte_product = muli(a, b.data[i]);
-        for (size_t j = 0; j < i; j++)
+        mint mcarry = newm();
+        int carry = 0;
+        for (int ai = 0; ai < p + 1; ai++)
         {
-            byte_product = muli(byte_product, BYTE_RADIX);
+            int mul_temp = a.data[ai] * b.data[bi] + carry;
+            carry = mul_temp / 256;
+            mcarry.data[bi + ai] = mul_temp % 256;
         }
-        temp_array[i] = byte_product;
+        product = summ(product, mcarry);
     }
-
-    for (size_t i = 0; i < MINT_BYTES; i++)
-    {
-        product = summ(product, temp_array[i]);
-    }
+    product.positive = a.positive == b.positive;
     return product;
 }
 
@@ -327,22 +344,23 @@ mint divm(mint n, mint d)
 {
     if (is_zero(d))
     {
-        printf("DIV BY ZERO");
+        printf("DIVM BYZERO");
         exit(1);
     }
 
     mint q = newm();
     mint r = newm();
-    for (size_t i = MINT_BITS; i-- > 0;)
+    for (size_t i = valid_bytes(n) * 8; i-- > 0;)
     {
         r = left_shift(r, 1);
         r = set_bit(r, 0, get_bit(n, i));
-        if (gt(r, d) || eq(r, d))
+        if (gt(r, absm(d)) || eq(r, absm(d)))
         {
-            r = subm(r, d);
+            r = subm(r, absm(d));
             q = set_bit(q, i, 1);
         }
     }
 
+    q.positive = n.positive == d.positive;
     return q;
 }
