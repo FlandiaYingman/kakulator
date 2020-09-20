@@ -331,8 +331,8 @@ mint mulm(mint a, mint b)
         for (int ai = 0; ai < p + 1; ai++)
         {
             int mul_temp = a.data[ai] * b.data[bi] + carry;
-            carry = mul_temp / 256;
-            mcarry.data[bi + ai] = mul_temp % 256;
+            carry = mul_temp / BYTE_RADIX;
+            mcarry.data[bi + ai] = mul_temp % BYTE_RADIX;
         }
         product = summ(product, mcarry);
     }

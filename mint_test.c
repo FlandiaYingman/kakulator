@@ -6,6 +6,7 @@
 
 #include "mint.h"
 
+
 int rand_i()
 {
     int int_bit = sizeof(int) * 8;
@@ -29,6 +30,7 @@ byte rand_b()
     }
     return random;
 }
+
 
 void test_basic_math()
 {
@@ -232,6 +234,7 @@ void test_basic_math()
     }
     printf("DONE!\n");
 }
+
 
 int main()
 {
