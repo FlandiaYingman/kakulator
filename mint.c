@@ -285,7 +285,7 @@ mint subm(mint a, mint b)
 {
     if (a.positive == b.positive)
     {
-        if (gt(absm(a), absm(b)))
+        if (gt(absm(a), absm(b)) || eq(absm(a), absm(b)))
         {
             mint sub = newm();
 
