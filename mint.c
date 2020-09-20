@@ -3,31 +3,38 @@
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+
 #include "mint.h"
 
-mint new_mint()
+
+// Initialization Functions
+
+mint newm()
 {
     mint new_mint;
     new_mint.positive = true;
-    memset(new_mint.data, BYTE_MIN, MINT_LENGTH);
+    memset(new_mint.data, BYTE_MIN, MINT_BYTES);
     return new_mint;
 }
 
+
+// Conversation Functions
+
 mint ll2m(long long ll)
 {
-    mint m = new_mint();
+    mint m = newm();
     m.positive = ll >= 0;
     ll = ll >= 0 ? ll : -ll;
     size_t index = 0;
     while (ll != 0)
     {
-        if (index >= MINT_LENGTH)
+        if (index >= MINT_BYTES)
         {
             printf("MINT LL2M OVERFLOW");
         }
 
-        m.data[index++] = ll % BYTE_DIGIT;
-        ll = ll / BYTE_DIGIT;
+        m.data[index++] = ll % BYTE_RADIX;
+        ll = ll / BYTE_RADIX;
     }
     return m;
 }
@@ -35,7 +42,7 @@ mint ll2m(long long ll)
 long long m2ll(mint m)
 {
     long long ll = 0;
-    for (size_t index = MINT_LENGTH; index-- > 0;)
+    for (size_t index = MINT_BYTES; index-- > 0;)
     {
         if (m.data[index] == BYTE_MIN)
         {
@@ -43,12 +50,12 @@ long long m2ll(mint m)
         }
         else
         {
-            if (ll > ll + m.data[index] * powl(BYTE_DIGIT, index))
+            if (ll > ll + m.data[index] * powl(BYTE_RADIX, index))
             {
                 printf("MINT M2LL OVERFLOW");
             }
 
-            ll += m.data[index] * powl(BYTE_DIGIT, index);
+            ll += m.data[index] * powl(BYTE_RADIX, index);
         }
     }
     return ll * (m.positive ? 1 : -1);
@@ -63,6 +70,9 @@ int m2i(mint m)
 {
     return m2ll(m);
 }
+
+
+// Bitwise Functions
 
 bool get_bit(mint m, int i)
 {
@@ -101,9 +111,12 @@ mint right_shift(mint m, int index)
     return m;
 }
 
+
+// Comparing Functions
+
 bool is_zero(mint m)
 {
-    for (size_t i = 0; i < MINT_LENGTH; i++)
+    for (size_t i = 0; i < MINT_BYTES; i++)
     {
         if (m.data[i] != BYTE_MIN)
         {
@@ -125,7 +138,7 @@ bool eq(mint a, mint b)
     }
     else
     {
-        for (size_t i = 0; i < MINT_LENGTH; i++)
+        for (size_t i = 0; i < MINT_BYTES; i++)
         {
             if (a.data[i] != b.data[i])
             {
@@ -151,7 +164,7 @@ bool gt(mint a, mint b)
         return false;
     }
 
-    for (size_t i = MINT_LENGTH; i-- > 0;)
+    for (size_t i = MINT_BYTES; i-- > 0;)
     {
         if (a.data[i] > b.data[i])
         {
@@ -180,7 +193,7 @@ bool lt(mint a, mint b)
         return true;
     }
 
-    for (size_t i = MINT_LENGTH; i-- > 0;)
+    for (size_t i = MINT_BYTES; i-- > 0;)
     {
         if (a.data[i] < b.data[i])
         {
@@ -194,28 +207,21 @@ bool lt(mint a, mint b)
     return false;
 }
 
-mint sumi(mint a, int b)
-{
-    return sum(a, i2m(b));
-}
 
-mint subi(mint a, int b)
-{
-    return sub(a, i2m(b));
-}
+// Basic Math Funcions
 
-mint sum(mint a, mint b)
+mint summ(mint a, mint b)
 {
     if (a.positive == b.positive)
     {
-        mint sum = new_mint();
+        mint sum = newm();
         sum.positive = a.positive;
         byte carry = BYTE_MIN;
-        for (size_t i = 0; i < MINT_LENGTH; i++)
+        for (size_t i = 0; i < MINT_BYTES; i++)
         {
             int byte_sum = (int)a.data[i] + (int)b.data[i] + carry;
-            sum.data[i] = byte_sum % BYTE_DIGIT;
-            carry = byte_sum / BYTE_DIGIT;
+            sum.data[i] = byte_sum % BYTE_RADIX;
+            carry = byte_sum / BYTE_RADIX;
         }
         if (carry != 0)
         {
@@ -229,32 +235,32 @@ mint sum(mint a, mint b)
         if (a.positive)
         {
             b.positive = true;
-            mint sum = sub(a, b);
+            mint sum = subm(a, b);
             b.positive = false;
             return sum;
         }
         if (b.positive)
         {
             a.positive = true;
-            mint sum = sub(b, a);
+            mint sum = subm(b, a);
             a.positive = false;
             return sum;
         }
     }
 }
 
-mint sub(mint a, mint b)
+mint subm(mint a, mint b)
 {
     if (a.positive == b.positive)
     {
-        mint sub = new_mint();
+        mint sub = newm();
         sub.positive = gt(a, b);
         int carry = 0;
-        for (size_t i = 0; i < MINT_LENGTH; i++)
+        for (size_t i = 0; i < MINT_BYTES; i++)
         {
-            int byte_sub = BYTE_DIGIT + (int)a.data[i] - (int)b.data[i] + carry;
-            sub.data[i] = byte_sub % BYTE_DIGIT;
-            carry = (byte_sub / BYTE_DIGIT) - 1;
+            int byte_sub = BYTE_RADIX + (int)a.data[i] - (int)b.data[i] + carry;
+            sub.data[i] = byte_sub % BYTE_RADIX;
+            carry = (byte_sub / BYTE_RADIX) - 1;
         }
         if (carry != 0)
         {
@@ -266,7 +272,7 @@ mint sub(mint a, mint b)
     else
     {
         b.positive = !(b.positive);
-        mint sub = sum(a, b);
+        mint sub = summ(a, b);
         b.positive = !(b.positive);
         return sub;
     }
@@ -274,15 +280,15 @@ mint sub(mint a, mint b)
 
 mint muli(mint a, int b)
 {
-    mint product = new_mint();
+    mint product = newm();
     product.positive = a.positive;
 
     unsigned long long carry = 0;
-    for (size_t i = 0; i < MINT_LENGTH; i++)
+    for (size_t i = 0; i < MINT_BYTES; i++)
     {
         unsigned long long byte_product = a.data[i] * b + carry;
-        product.data[i] = byte_product % BYTE_DIGIT;
-        carry = byte_product / BYTE_DIGIT;
+        product.data[i] = byte_product % BYTE_RADIX;
+        carry = byte_product / BYTE_RADIX;
     }
 
     if (carry != 0)
@@ -294,30 +300,30 @@ mint muli(mint a, int b)
     return product;
 }
 
-mint mul(mint a, mint b)
+mint mulm(mint a, mint b)
 {
-    mint product = new_mint();
+    mint product = newm();
     product.positive = a.positive == b.positive;
 
-    mint temp_array[MINT_LENGTH];
-    for (size_t i = 0; i < MINT_LENGTH; i++)
+    mint temp_array[MINT_BYTES];
+    for (size_t i = 0; i < MINT_BYTES; i++)
     {
         mint byte_product = muli(a, b.data[i]);
         for (size_t j = 0; j < i; j++)
         {
-            byte_product = muli(byte_product, BYTE_DIGIT);
+            byte_product = muli(byte_product, BYTE_RADIX);
         }
         temp_array[i] = byte_product;
     }
 
-    for (size_t i = 0; i < MINT_LENGTH; i++)
+    for (size_t i = 0; i < MINT_BYTES; i++)
     {
-        product = sum(product, temp_array[i]);
+        product = summ(product, temp_array[i]);
     }
     return product;
 }
 
-mint mdiv(mint n, mint d)
+mint divm(mint n, mint d)
 {
     if (is_zero(d))
     {
@@ -325,66 +331,18 @@ mint mdiv(mint n, mint d)
         exit(1);
     }
 
-    mint q = new_mint();
-    mint r = new_mint();
+    mint q = newm();
+    mint r = newm();
     for (size_t i = MINT_BITS; i-- > 0;)
     {
         r = left_shift(r, 1);
         r = set_bit(r, 0, get_bit(n, i));
         if (gt(r, d) || eq(r, d))
         {
-            r = sub(r, d);
+            r = subm(r, d);
             q = set_bit(q, i, 1);
         }
     }
 
     return q;
-}
-
-int main()
-{
-    mint m_1000 = i2m(1000);
-    mint m_n1000 = i2m(-1000);
-    mint m_2147483647 = i2m(2147483647);
-
-    int i_1000 = m2i(i2m(1000));
-    int i_n1000 = m2i(i2m(-1000));
-    int i_2147483647 = m2i(i2m(2147483647));
-
-    bool get_bit_255_4 = get_bit(ll2m(255), 4);
-    bool get_bit_255_7 = get_bit(ll2m(255), 7);
-    bool get_bit_2147483647_30 = get_bit(ll2m(2147483647), 30);
-
-    mint set_bit_255_4 = set_bit(ll2m(255), 4, 0);
-    mint set_bit_255_7 = set_bit(ll2m(255), 7, 0);
-    mint set_bit_2147483647_30 = set_bit(ll2m(2147483647), 30, 0);
-
-    bool gt_2147483647_2147483646 = gt(i2m(2147483647), i2m(2147483646));
-    bool gt_32767_2147483647 = gt(i2m(32767), i2m(2147483647));
-
-    bool lt_2147483647_2147483646 = lt(i2m(2147483647), i2m(2147483646));
-    bool lt_32767_2147483647 = lt(i2m(32767), i2m(2147483647));
-
-    bool eq_2147483647_2147483646 = eq(i2m(2147483647), i2m(2147483646));
-    bool eq_2147483647_2147483647 = eq(i2m(2147483647), i2m(2147483647));
-
-    mint sum_1000_1000 = sum(i2m(1000), i2m(1000));
-    mint sum_n1000_1000 = sum(i2m(-1000), i2m(1000));
-    mint sum_2147483647_2147483647 = sum(i2m(2147483647), i2m(2147483647));
-
-    mint sub_1000_500 = sub(i2m(1000), i2m(500));
-    mint sub_n1000_500 = sub(i2m(-1000), i2m(500));
-    mint sub_2147483647_32767 = sub(i2m(2147483647), i2m(32767));
-
-    mint mulb_9_81 = muli(i2m(9), 81);
-    mint mulb_1234567_177 = muli(i2m(1234567), 177);
-
-    mint mul_123_321 = mul(i2m(123), i2m(321));
-    mint mul_1234567_7654321 = mul(i2m(1234567), i2m(7654321));
-
-    mint div_1024_256 = mdiv(ll2m(1024), ll2m(256));
-    mint div_32768_256 = mdiv(ll2m(32768), ll2m(256));
-    mint div_2147483648_256 = mdiv(ll2m(2147483648), ll2m(256));
-
-    return 0;
 }
